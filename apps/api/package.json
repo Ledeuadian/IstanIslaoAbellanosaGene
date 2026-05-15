@@ -7,7 +7,7 @@
     "dev": "node dist/apps/api/src/main.js",
     "dev:watch": "node --watch dist/apps/api/src/main.js",
     "start:debug": "tsx watch --inspect src/main.ts",
-    "start:prod": "node dist/main",
+    "start:prod": "node dist/apps/api/src/main.js",
     "lint": "eslint .",
     "seed": "tsx src/neo4j/seed.ts"
   },
