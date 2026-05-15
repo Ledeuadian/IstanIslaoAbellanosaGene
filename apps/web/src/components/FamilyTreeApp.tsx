@@ -25,6 +25,7 @@ function CameraController() {
   const isDraggingNodeRef = useRef(false);
   const isMobileRef = useRef(false);
   const lastPanTimeRef = useRef(0);
+  const isPinchingRef = useRef(false);
   
   // Pinch-to-zoom state
   const pinchState = useRef({ 
@@ -59,18 +60,25 @@ function CameraController() {
   useEffect(() => {
     const canvas = gl.domElement;
     const isMobile = () => isMobileRef.current;
+    const isPinching = () => isPinchingRef.current;
     
     // Faster lerp on mobile for snappier response
-    const lerpFactor = () => isMobile() ? 0.25 : 0.1;
+    const lerpFactor = () => isMobile() ? 0.2 : 0.1;
     
     const handlePointerDown = (e: PointerEvent) => {
-      if (e.button === 0 && !isDraggingNodeRef.current) {
+      // Don't handle single pointer if we're in pinch mode or dragging node
+      if (isDraggingNodeRef.current) return;
+      if (isPinchingRef.current) return;
+      
+      if (e.button === 0) {
         dragState.current = { isDragging: true, lastX: e.clientX, lastY: e.clientY };
         canvas.setPointerCapture(e.pointerId);
       }
     };
 
     const handlePointerMove = (e: PointerEvent) => {
+      // Don't pan during pinch zoom
+      if (isPinchingRef.current) return;
       if (!dragState.current.isDragging) return;
       
       // Throttle on mobile for better performance
@@ -80,6 +88,9 @@ function CameraController() {
 
       const dx = dragState.current.lastX - e.clientX;
       const dy = dragState.current.lastY - e.clientY;
+
+      // Only pan if movement is significant (prevent jitter)
+      if (Math.abs(dx) < 2 && Math.abs(dy) < 2) return;
 
       // Pan the camera (move in opposite direction of drag)
       targetPosition.current.x += dx * 0.02;
@@ -95,31 +106,50 @@ function CameraController() {
 
     const handlePointerUp = (e: PointerEvent) => {
       dragState.current.isDragging = false;
-      canvas.releasePointerCapture(e.pointerId);
+      try {
+        canvas.releasePointerCapture(e.pointerId);
+      } catch (e) {
+        // Ignore if capture already released
+      }
     };
 
     // Touch event handlers for pinch-to-zoom
     const handleTouchStart = (e: TouchEvent) => {
+      // If already pinching, ignore
+      if (isPinchingRef.current) return;
+      
+      // Start pinch only with 2 fingers and not dragging a node
       if (e.touches.length === 2 && !isDraggingNodeRef.current) {
         e.preventDefault();
+        isPinchingRef.current = true;
         pinchState.current.isPinching = true;
         pinchState.current.initialDistance = getTouchDistance(e.touches[0], e.touches[1]);
         pinchState.current.initialZoom = targetPosition.current.z;
+        
+        // Cancel any single-finger drag
+        dragState.current.isDragging = false;
       }
     };
 
     const handleTouchMove = (e: TouchEvent) => {
-      if (pinchState.current.isPinching && e.touches.length === 2) {
-        e.preventDefault();
-        const currentDistance = getTouchDistance(e.touches[0], e.touches[1]);
-        const scale = pinchState.current.initialDistance / currentDistance;
-        const newZoom = Math.max(3, Math.min(500, pinchState.current.initialZoom * scale));
-        targetPosition.current.z = newZoom;
-      }
+      // Only handle pinch if we're in pinch mode with 2 fingers
+      if (!isPinchingRef.current || e.touches.length !== 2) return;
+      
+      e.preventDefault();
+      e.stopPropagation();
+      
+      const currentDistance = getTouchDistance(e.touches[0], e.touches[1]);
+      const scale = pinchState.current.initialDistance / currentDistance;
+      const newZoom = Math.max(3, Math.min(500, pinchState.current.initialZoom * scale));
+      
+      // Smooth zoom transition
+      targetPosition.current.z += (newZoom - targetPosition.current.z) * 0.3;
     };
 
     const handleTouchEnd = (e: TouchEvent) => {
-      if (e.touches.length < 2 && pinchState.current.isPinching) {
+      // Only stop pinch if we actually had 2 fingers
+      if (e.touches.length < 2 && isPinchingRef.current) {
+        isPinchingRef.current = false;
         pinchState.current.isPinching = false;
       }
     };
@@ -137,7 +167,7 @@ function CameraController() {
     canvas.addEventListener('pointerleave', handlePointerUp);
     canvas.addEventListener('wheel', handleWheel, { passive: false });
     
-    // Touch events for mobile
+    // Touch events for mobile - capture phase to prevent propagation
     canvas.addEventListener('touchstart', handleTouchStart, { passive: false });
     canvas.addEventListener('touchmove', handleTouchMove, { passive: false });
     canvas.addEventListener('touchend', handleTouchEnd, { passive: true });
@@ -159,7 +189,7 @@ function CameraController() {
   }, [gl]);
 
   useFrame(() => {
-    const lerpFactor = isMobileRef.current ? 0.25 : 0.1;
+    const lerpFactor = isMobileRef.current ? 0.2 : 0.1;
     
     // Smoothly interpolate camera position
     camera.position.lerp(targetPosition.current, lerpFactor);
