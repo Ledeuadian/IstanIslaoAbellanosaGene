@@ -8,7 +8,7 @@ import { useTreeStore } from '../store/treeStore';
 import { useAuthStore } from '../store/authStore';
 import { PersonAvatar, AddPersonModal, AddParentModal, AddSpouseModal, EditPersonModal } from '@tree/ui';
 import { usePerson, usePersons, useCreatePerson, useDeletePerson, useAddParent, useAddSpouse, useUpdatePerson, useSpouseRelations, useParentChildRelations } from '../graphql/hooks';
-import type { CreatePersonInput, Person } from '@tree/types';
+import type { CreatePersonInput, Person, Gender } from '@tree/types';
 
 export default function Sidebar() {
   const { 
@@ -377,6 +377,13 @@ export default function Sidebar() {
     setShowAddSpouseModal(false);
   };
 
+  // Get opposite gender for the selected person (to pre-fill spouse's gender)
+  const getOppositeGender = (gender: string | undefined): Gender => {
+    if (gender === "male") return "female";
+    if (gender === "female") return "male";
+    return "unknown";
+  };
+
   // Handle Edit Person
   const handleEditPerson = async (data: Partial<CreatePersonInput>) => {
     console.log('[Sidebar] handleEditPerson called with data:', data);
@@ -655,6 +662,7 @@ export default function Sidebar() {
         onClose={() => setShowAddSpouseModal(false)}
         onSubmit={handleAddSpouse}
         personId={selectedNodeId}
+        defaultGender={selectedPerson ? getOppositeGender(selectedPerson.gender) : "unknown"}
       />
 
       {/* Edit Person Modal */}

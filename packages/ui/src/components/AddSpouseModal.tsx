@@ -2,7 +2,7 @@
 // ADD SPOUSE MODAL COMPONENT
 // ==========================================
 
-import React, { useState, useRef } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import type { CreatePersonInput, Gender } from "@tree/types";
 
 interface AddSpouseModalProps {
@@ -10,6 +10,15 @@ interface AddSpouseModalProps {
   onClose: () => void;
   onSubmit: (data: CreatePersonInput) => void;
   personId?: string;
+  defaultGender?: Gender;
+  defaultLastName?: string;
+}
+
+// Helper to get opposite gender
+function getOppositeGender(gender: Gender | undefined): Gender {
+  if (gender === "male") return "female";
+  if (gender === "female") return "male";
+  return "unknown";
 }
 
 const genderOptions: { value: Gender; label: string }[] = [
@@ -24,10 +33,12 @@ export function AddSpouseModal({
   onClose,
   onSubmit,
   personId,
+  defaultGender,
+  defaultLastName,
 }: AddSpouseModalProps) {
   const [formData, setFormData] = useState<CreatePersonInput>({
     firstName: "",
-    lastName: "",
+    lastName: defaultLastName || "",
     gender: "unknown",
     birthDate: "",
     birthPlace: "",
@@ -38,6 +49,17 @@ export function AddSpouseModal({
 
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [previewUrl, setPreviewUrl] = useState<string>("");
+
+  // Set default gender to opposite of the selected person
+  useEffect(() => {
+    if (isOpen) {
+      setFormData((prev) => ({
+        ...prev,
+        lastName: defaultLastName || prev.lastName,
+        gender: defaultGender || prev.gender,
+      }));
+    }
+  }, [isOpen, defaultGender, defaultLastName]);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];

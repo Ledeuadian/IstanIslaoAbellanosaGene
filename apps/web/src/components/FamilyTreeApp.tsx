@@ -9,7 +9,7 @@ import * as THREE from 'three';
 import { useTreeStore } from '../store/treeStore';
 import { useAuthStore } from '../store/authStore';
 import { useTreeRoot, useTreeStats, useCreatePerson, usePersons } from '../graphql/hooks';
-import { SearchBar, ZoomControls, AddPersonModal } from '@tree/ui';
+import { SearchBar, AddPersonModal } from '@tree/ui';
 import LoginModal from './LoginModal';
 import type { CreatePersonInput, Person } from '@tree/types';
 
@@ -137,6 +137,7 @@ export function FamilyTreeApp() {
   const user = useAuthStore((s) => s.user);
   const logout = useAuthStore((s) => s.logout);
   const [showUserMenu, setShowUserMenu] = useState(false);
+  const [showCredits, setShowCredits] = useState(false);
 
   // Load tree data from GraphQL API
   const { rootNodes, loading: rootLoading, error: rootError, refetch } = useTreeRoot();
@@ -254,9 +255,12 @@ export function FamilyTreeApp() {
         <div className="absolute top-0 left-0 right-0 p-4 flex items-center justify-between" style={{ pointerEvents: 'auto' }}>
           <div className="flex items-center gap-4">
             <div className="bg-white/90 backdrop-blur-sm rounded-xl shadow-lg px-4 py-2">
-              <h1 className="text-xl font-bold text-gray-900 flex items-center gap-2">
-                🌳 
-              </h1>
+              <button
+                onClick={() => setShowCredits(true)}
+                className="flex items-center gap-2 hover:bg-gray-100 rounded-lg transition-colors cursor-pointer"
+              >
+                <img src="/images/abellanosaClan.png" alt="Abellanosa Clan" className="h-8 w-auto" />
+              </button>
             </div>
 
             <div className="bg-white/90 backdrop-blur-sm rounded-xl shadow-lg px-4 py-2">
@@ -321,17 +325,6 @@ export function FamilyTreeApp() {
           </div>
         </div>
 
-        {/* Zoom Controls */}
-        <div className="absolute bottom-8 left-8" style={{ pointerEvents: 'auto' }}>
-          <ZoomControls
-            zoom={viewport.zoom}
-            onZoomIn={handleZoomIn}
-            onZoomOut={handleZoomOut}
-            onZoomToFit={handleZoomToFit}
-            onReset={handleReset}
-          />
-        </div>
-
         {/* Sidebar - only show when a person is selected */}
         {selectedNodeId && (
           <div className="absolute top-20 right-4 w-80" style={{ pointerEvents: 'auto' }}>
@@ -363,6 +356,76 @@ export function FamilyTreeApp() {
         isOpen={showLoginModal}
         onClose={() => setShowLoginModal(false)}
       />
+
+      {/* Credits Modal */}
+      {showCredits && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70">
+          <div className="relative w-full max-w-2xl h-96 overflow-hidden bg-gradient-to-b from-amber-100 to-amber-50 rounded-2xl shadow-2xl">
+            {/* Close button */}
+            <button
+              onClick={() => setShowCredits(false)}
+              className="absolute top-4 right-4 z-10 w-8 h-8 bg-white/80 rounded-full flex items-center justify-center text-gray-600 hover:bg-white transition-colors"
+            >
+              ✕
+            </button>
+
+            {/* Scrolling credits */}
+            <div className="h-full overflow-hidden relative">
+              <div className="family-credits-scroll absolute inset-0 flex flex-col justify-start">
+                <div className="h-96" /> {/* Spacer for initial position */}
+                <div className="text-center px-8 py-12 space-y-16">
+                  {/* Title */}
+                  <div>
+                    <img src="/images/abellanosaClan.png" alt="Abellanosa Clan" className="h-24 w-auto mx-auto mb-4" />
+                    <h2 className="text-3xl font-serif font-bold text-amber-900 mb-6">Credits & Gratitude</h2>
+                  </div>
+
+                  {/* First paragraph */}
+                  <p className="text-lg text-gray-700 leading-relaxed max-w-lg mx-auto">
+                    The Genealogy record is a labor of love of{" "}
+                    <span className="font-semibold text-amber-900">Mario T. Abellanosa</span>.
+                    Since 1960s, he has been gathering data from relatives, visiting places and
+                    compiling them, which he dreamed to complete "before I die". The dream has
+                    come true as of 1997. To him the Abellanosa are most indebted.
+                  </p>
+
+                  {/* Divider */}
+                  <div className="flex items-center justify-center gap-4">
+                    <div className="h-px w-16 bg-amber-300"></div>
+                    <div className="text-amber-400">✨</div>
+                    <div className="h-px w-16 bg-amber-300"></div>
+                  </div>
+
+                  {/* Second paragraph */}
+                  <p className="text-lg text-gray-700 leading-relaxed max-w-lg mx-auto">
+                    "Encouragement and loving pressure came from{" "}
+                    <span className="font-semibold text-amber-900">Felomino N. Bautista</span>{" "}
+                    to publish this labor of Love."
+                  </p>
+
+                  {/* End spacer */}
+                  <div className="h-32"></div>
+                </div>
+              </div>
+            </div>
+
+            {/* Gradient overlays */}
+            <div className="absolute top-0 left-0 right-0 h-20 bg-gradient-to-b from-amber-100 to-transparent pointer-events-none"></div>
+            <div className="absolute bottom-0 left-0 right-0 h-20 bg-gradient-to-t from-amber-50 to-transparent pointer-events-none"></div>
+          </div>
+        </div>
+      )}
+
+      {/* Inline styles for scrolling animation */}
+      <style>{`
+        @keyframes familyCreditsScroll {
+          0% { transform: translateY(0); }
+          100% { transform: translateY(-50%); }
+        }
+        .family-credits-scroll {
+          animation: familyCreditsScroll 20s linear forwards;
+        }
+      `}</style>
     </div>
   );
 }
