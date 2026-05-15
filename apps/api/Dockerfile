@@ -16,7 +16,7 @@ RUN pnpm install --frozen-lockfile
 # Copy source code
 COPY . .
 
-# Build the API
+# Build the API - nest builds to apps/api/dist
 RUN pnpm --filter api build
 
 # Final stage - production image
@@ -26,11 +26,12 @@ WORKDIR /app
 
 # Copy node_modules and built files
 COPY --from=base /app/node_modules ./node_modules
-COPY --from=base /app/apps/api ./apps/api
-COPY --from=base /app/packages/types ./packages/types
+COPY --from=base /app/apps ./apps
+COPY --from=base /app/packages ./packages
 
 # Expose port
 EXPOSE 3000
 
-# Start the API
-CMD ["node", "dist/apps/api/src/main.js"]
+# Start the API from api directory
+WORKDIR /app/apps/api
+CMD ["node", "dist/main.js"]
