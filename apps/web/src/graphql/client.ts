@@ -20,7 +20,7 @@ const authLink = new ApolloLink((operation, forward) => {
 });
 
 const httpLink = new HttpLink({
-  uri: 'http://localhost:4000/graphql',
+  uri: import.meta.env.VITE_API_URL || 'http://localhost:4000/graphql',
 });
 
 export const APOLLO_CLIENT = new ApolloClient({
