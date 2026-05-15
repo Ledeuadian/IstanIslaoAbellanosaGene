@@ -23,6 +23,18 @@ function CameraController() {
   const targetPosition = useRef(new THREE.Vector3());
   const targetLookAt = useRef(new THREE.Vector3());
   const isDraggingNodeRef = useRef(false);
+  const isMobileRef = useRef(false);
+  const lastPanTimeRef = useRef(0);
+
+  // Mobile detection
+  useEffect(() => {
+    isMobileRef.current = window.innerWidth < 768;
+    const handleResize = () => {
+      isMobileRef.current = window.innerWidth < 768;
+    };
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
 
   // Keep ref in sync with store
   const isDraggingNode = useTreeStore((s) => s.isDraggingNode);
@@ -32,6 +44,10 @@ function CameraController() {
 
   useEffect(() => {
     const canvas = gl.domElement;
+    const isMobile = () => isMobileRef.current;
+    
+    // Faster lerp on mobile for snappier response
+    const lerpFactor = () => isMobile() ? 0.25 : 0.1;
     
     const handlePointerDown = (e: PointerEvent) => {
       if (e.button === 0 && !isDraggingNodeRef.current) {
@@ -42,6 +58,11 @@ function CameraController() {
 
     const handlePointerMove = (e: PointerEvent) => {
       if (!dragState.current.isDragging) return;
+      
+      // Throttle on mobile for better performance
+      const now = Date.now();
+      if (isMobile() && now - lastPanTimeRef.current < 16) return; // ~60fps cap
+      lastPanTimeRef.current = now;
 
       const dx = dragState.current.lastX - e.clientX;
       const dy = dragState.current.lastY - e.clientY;
@@ -66,12 +87,12 @@ function CameraController() {
     // Mouse wheel zoom
     const handleWheel = (e: WheelEvent) => {
       e.preventDefault();
-      const zoomDelta = e.deltaY > 0 ? 0.1 : -0.1;
+      const zoomDelta = e.deltaY > 0 ? 0.15 : -0.15;
       targetPosition.current.z = Math.max(3, Math.min(500, targetPosition.current.z + zoomDelta * 20));
     };
 
     canvas.addEventListener('pointerdown', handlePointerDown);
-    canvas.addEventListener('pointermove', handlePointerMove);
+    canvas.addEventListener('pointermove', handlePointerMove, { passive: true });
     canvas.addEventListener('pointerup', handlePointerUp);
     canvas.addEventListener('pointerleave', handlePointerUp);
     canvas.addEventListener('wheel', handleWheel, { passive: false });
@@ -90,14 +111,16 @@ function CameraController() {
   }, [gl]);
 
   useFrame(() => {
+    const lerpFactor = isMobileRef.current ? 0.25 : 0.1;
+    
     // Smoothly interpolate camera position
-    camera.position.lerp(targetPosition.current, 0.1);
+    camera.position.lerp(targetPosition.current, lerpFactor);
     
     // Smoothly interpolate look-at target
     const currentLookAt = new THREE.Vector3();
     camera.getWorldDirection(currentLookAt);
     currentLookAt.multiplyScalar(10).add(camera.position);
-    currentLookAt.lerp(targetLookAt.current, 0.1);
+    currentLookAt.lerp(targetLookAt.current, lerpFactor);
     
     camera.lookAt(targetLookAt.current);
   });
@@ -213,7 +236,7 @@ export function FamilyTreeApp() {
   return (
     <div className="w-full h-screen relative overflow-hidden">
       {/* 3D Canvas */}
-      <div className="absolute inset-0" style={{ pointerEvents: 'auto' }}>
+      <div className="absolute inset-0" style={{ pointerEvents: 'auto', touchAction: 'none' }}>
         <Canvas
           camera={{
             position: [viewport.centerX, viewport.centerY, viewport.centerZ],
@@ -221,8 +244,8 @@ export function FamilyTreeApp() {
             near: 0.1,
             far: 1000,
           }}
-          gl={{ antialias: true, alpha: false }}
-          dpr={[1, 2]}
+          gl={{ antialias: true, alpha: false, powerPreference: 'high-performance' }}
+          dpr={[1, 1.5]}
           className="family-tree-canvas"
         >
           <Suspense fallback={null}>
