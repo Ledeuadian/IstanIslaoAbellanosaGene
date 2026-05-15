@@ -25,6 +25,13 @@ function CameraController() {
   const isDraggingNodeRef = useRef(false);
   const isMobileRef = useRef(false);
   const lastPanTimeRef = useRef(0);
+  
+  // Pinch-to-zoom state
+  const pinchState = useRef({ 
+    isPinching: false, 
+    initialDistance: 0, 
+    initialZoom: 0 
+  });
 
   // Mobile detection
   useEffect(() => {
@@ -41,6 +48,13 @@ function CameraController() {
   useEffect(() => {
     isDraggingNodeRef.current = isDraggingNode;
   }, [isDraggingNode]);
+
+  // Calculate distance between two touch points
+  const getTouchDistance = (touch1: Touch, touch2: Touch) => {
+    const dx = touch2.clientX - touch1.clientX;
+    const dy = touch2.clientY - touch1.clientY;
+    return Math.sqrt(dx * dx + dy * dy);
+  };
 
   useEffect(() => {
     const canvas = gl.domElement;
@@ -84,6 +98,32 @@ function CameraController() {
       canvas.releasePointerCapture(e.pointerId);
     };
 
+    // Touch event handlers for pinch-to-zoom
+    const handleTouchStart = (e: TouchEvent) => {
+      if (e.touches.length === 2 && !isDraggingNodeRef.current) {
+        e.preventDefault();
+        pinchState.current.isPinching = true;
+        pinchState.current.initialDistance = getTouchDistance(e.touches[0], e.touches[1]);
+        pinchState.current.initialZoom = targetPosition.current.z;
+      }
+    };
+
+    const handleTouchMove = (e: TouchEvent) => {
+      if (pinchState.current.isPinching && e.touches.length === 2) {
+        e.preventDefault();
+        const currentDistance = getTouchDistance(e.touches[0], e.touches[1]);
+        const scale = pinchState.current.initialDistance / currentDistance;
+        const newZoom = Math.max(3, Math.min(500, pinchState.current.initialZoom * scale));
+        targetPosition.current.z = newZoom;
+      }
+    };
+
+    const handleTouchEnd = (e: TouchEvent) => {
+      if (e.touches.length < 2 && pinchState.current.isPinching) {
+        pinchState.current.isPinching = false;
+      }
+    };
+
     // Mouse wheel zoom
     const handleWheel = (e: WheelEvent) => {
       e.preventDefault();
@@ -96,6 +136,11 @@ function CameraController() {
     canvas.addEventListener('pointerup', handlePointerUp);
     canvas.addEventListener('pointerleave', handlePointerUp);
     canvas.addEventListener('wheel', handleWheel, { passive: false });
+    
+    // Touch events for mobile
+    canvas.addEventListener('touchstart', handleTouchStart, { passive: false });
+    canvas.addEventListener('touchmove', handleTouchMove, { passive: false });
+    canvas.addEventListener('touchend', handleTouchEnd, { passive: true });
 
     // Set initial targets
     targetPosition.current.set(0, 0, 20);
@@ -107,6 +152,9 @@ function CameraController() {
       canvas.removeEventListener('pointerup', handlePointerUp);
       canvas.removeEventListener('pointerleave', handlePointerUp);
       canvas.removeEventListener('wheel', handleWheel);
+      canvas.removeEventListener('touchstart', handleTouchStart);
+      canvas.removeEventListener('touchmove', handleTouchMove);
+      canvas.removeEventListener('touchend', handleTouchEnd);
     };
   }, [gl]);
 
