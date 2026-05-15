@@ -34,4 +34,4 @@ EXPOSE 3000
 
 # Start the API from api directory
 WORKDIR /app/apps/api
-CMD ["node", "dist/apps/api/src/main.js"]
+CMD ["node", "dist/main.js"]
