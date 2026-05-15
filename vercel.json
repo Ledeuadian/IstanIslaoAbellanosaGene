@@ -1,9 +1,5 @@
 {
-  "rewrites": [
-    { "source": "/(.*)", "destination": "/index.html" }
-  ],
-  "buildCommand": "cd apps/web && pnpm install && pnpm build",
+  "buildCommand": "pnpm install && pnpm --filter web build",
   "outputDirectory": "apps/web/dist",
-  "framework": "vite",
-  "regions": ["sin1"]
+  "framework": "vite"
 }
