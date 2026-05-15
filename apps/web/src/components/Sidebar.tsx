@@ -3,7 +3,7 @@
 // Shows details of selected person with API integration
 // ==========================================
 
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { useTreeStore } from '../store/treeStore';
 import { useAuthStore } from '../store/authStore';
 import { PersonAvatar, AddPersonModal, AddParentModal, AddSpouseModal, EditPersonModal } from '@tree/ui';
@@ -28,6 +28,28 @@ export default function Sidebar() {
 
   const isAdmin = useAuthStore((s) => s.isAdmin);
   const authUser = useAuthStore((s) => s.user);
+  
+  // Collapsible state for mobile
+  const [isCollapsed, setIsCollapsed] = useState(false);
+  
+  // Auto-collapse on mobile when a node is selected
+  const [isMobile, setIsMobile] = useState(false);
+  
+  useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth < 768);
+    };
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
+  
+  // Auto-collapse sidebar when a node is selected on mobile
+  useEffect(() => {
+    if (isMobile && selectedNodeId) {
+      setIsCollapsed(true);
+    }
+  }, [selectedNodeId, isMobile]);
   
   // Show editing person's info if editingNodeId is set, otherwise show selected person
   const effectiveNodeId = editingNodeId || selectedNodeId;
@@ -416,10 +438,12 @@ export default function Sidebar() {
 
   if (loading) {
     return (
-      <div className="bg-white/90 backdrop-blur-sm rounded-xl shadow-lg p-6">
-        <div className="text-center text-gray-500">
-          <div className="w-8 h-8 border-4 border-blue-600 border-t-transparent rounded-full animate-spin mx-auto" />
-          <p className="mt-2">Loading...</p>
+      <div className="bg-white/90 backdrop-blur-sm rounded-xl shadow-lg">
+        <div className="p-6">
+          <div className="text-center text-gray-500">
+            <div className="w-8 h-8 border-4 border-blue-600 border-t-transparent rounded-full animate-spin mx-auto" />
+            <p className="mt-2">Loading...</p>
+          </div>
         </div>
       </div>
     );
@@ -427,18 +451,54 @@ export default function Sidebar() {
 
   if (!selectedPerson) {
     return (
-      <div className="bg-white/90 backdrop-blur-sm rounded-xl shadow-lg p-6">
-        <div className="text-center text-gray-500">
-          <div className="text-4xl mb-2">❓</div>
-          <p>Person not found</p>
+      <div className="bg-white/90 backdrop-blur-sm rounded-xl shadow-lg">
+        <div className="p-6">
+          <div className="text-center text-gray-500">
+            <div className="text-4xl mb-2">❓</div>
+            <p>Person not found</p>
+          </div>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="bg-white/90 backdrop-blur-sm rounded-xl shadow-lg overflow-hidden max-h-[calc(100vh-120px)] overflow-y-auto">
-      <div className="p-6">
+    <div className={`bg-white/90 backdrop-blur-sm rounded-xl shadow-lg overflow-hidden transition-all duration-300 ${isCollapsed ? 'w-12 min-h-[60px]' : 'w-full max-h-[calc(100vh-120px)] overflow-y-auto'}`}>
+      {/* Collapse Toggle Button */}
+      <button
+        onClick={() => setIsCollapsed(!isCollapsed)}
+        className="w-full flex items-center justify-between px-4 py-3 bg-gray-100 hover:bg-gray-200 transition-colors"
+        aria-label={isCollapsed ? "Expand sidebar" : "Collapse sidebar"}
+      >
+        {isCollapsed ? (
+          <div className="flex flex-col items-center w-full">
+            <PersonAvatar person={selectedPerson} size="small" />
+            <svg className="w-5 h-5 mt-1 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+            </svg>
+          </div>
+        ) : (
+          <>
+            <span className="font-medium text-gray-700">Person Details</span>
+            <svg className="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+            </svg>
+          </>
+        )}
+      </button>
+
+      {/* Collapsed View - Just Avatar and Expand Button */}
+      {isCollapsed && (
+        <div className="p-2 flex flex-col items-center">
+          <span className="text-xs text-gray-600 mt-1 truncate max-w-[60px] text-center">
+            {selectedPerson.firstName}
+          </span>
+        </div>
+      )}
+
+      {/* Expanded Content */}
+      {!isCollapsed && (
+        <div className="p-6">
         <div className="flex flex-col items-center text-center">
           <PersonAvatar person={selectedPerson} size="xlarge" />
 
@@ -640,6 +700,7 @@ export default function Sidebar() {
           </div>
         )}
       </div>
+      )}
 
       <AddPersonModal
         isOpen={showAddModal}

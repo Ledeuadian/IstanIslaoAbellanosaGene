@@ -263,14 +263,14 @@ export function FamilyTreeApp() {
               </button>
             </div>
 
-            <div className="bg-white/90 backdrop-blur-sm rounded-xl shadow-lg px-4 py-2">
+            <div className="hidden md:block bg-white/90 backdrop-blur-sm rounded-xl shadow-lg px-4 py-2">
               <span className="text-sm text-gray-600">
                 {stats.totalPeople} members · {stats.totalGenerations} generations
               </span>
             </div>
           </div>
 
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-2 md:gap-4">
             {/* User/Login Button */}
             {isAuthenticated ? (
               <div className="relative">
@@ -320,14 +320,14 @@ export function FamilyTreeApp() {
             
             <SearchBar
               onSearch={handleSearch}
-              className="w-80"
+              className="w-80 max-w-[calc(100vw-2rem)] relative"
             />
           </div>
         </div>
 
         {/* Sidebar - only show when a person is selected */}
         {selectedNodeId && (
-          <div className="absolute top-20 right-4 w-80" style={{ pointerEvents: 'auto' }}>
+          <div className="absolute top-28 md:top-20 left-0 right-0 md:left-auto md:right-4 w-full md:w-80 px-2 md:px-0" style={{ pointerEvents: 'auto' }}>
             <Suspense fallback={null}>
               <Sidebar />
             </Suspense>
