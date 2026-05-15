@@ -1,0 +1,10 @@
+{
+  "compilerOptions": {
+    "baseUrl": ".",
+    "paths": {
+      "@tree/types": ["packages/types/src"],
+      "@tree/tree-engine": ["packages/tree-engine/src"],
+      "@tree/ui": ["packages/ui/src"]
+    }
+  }
+}

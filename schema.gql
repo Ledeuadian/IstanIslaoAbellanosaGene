@@ -1,0 +1,99 @@
+# ------------------------------------------------------
+# THIS FILE WAS AUTOMATICALLY GENERATED (DO NOT MODIFY)
+# ------------------------------------------------------
+
+input CreatePersonInputGQL {
+  bio: String
+  birthDate: String
+  birthPlace: String
+  deathDate: String
+  deathPlace: String
+  firstName: String!
+  gender: Gender!
+  generation: Float
+  lastName: String!
+  maidenName: String
+  middleName: String
+}
+
+type FamilyGQL {
+  createdAt: String!
+  id: ID!
+  name: String
+}
+
+enum Gender {
+  FEMALE
+  MALE
+  OTHER
+  UNKNOWN
+}
+
+type Mutation {
+  addParent(childId: String!, parentId: String!, type: String = "biological"): Boolean!
+  addSpouse(personId: String!, spouseId: String!, type: String = "married"): Boolean!
+  createFamily(name: String): FamilyGQL!
+  createPerson(input: CreatePersonInputGQL!): PersonGQL!
+  deleteFamily(id: ID!): Boolean!
+  deletePerson(id: String!): Boolean!
+  updatePerson(id: String!, input: UpdatePersonInputGQL!): PersonGQL
+}
+
+type PersonGQL {
+  bio: String
+  birthDate: String
+  birthPlace: String
+  createdAt: String!
+  deathDate: String
+  deathPlace: String
+  firstName: String!
+  gender: Gender!
+  generation: Int!
+  id: ID!
+  lastName: String!
+  maidenName: String
+  middleName: String
+  notes: String
+  photo: String
+  updatedAt: String!
+}
+
+type Query {
+  children(parentId: String!): [PersonGQL!]!
+  descendants(maxDepth: Float! = 10, rootId: String!): [PersonGQL!]!
+  families: [FamilyGQL!]!
+  familiesForPerson(personId: String!): [FamilyGQL!]!
+  family(id: String!): FamilyGQL
+  parents(childId: String!): [PersonGQL!]!
+  person(id: String!): PersonGQL
+  persons: [PersonGQL!]!
+  searchPersons(query: String!): [PersonGQL!]!
+  siblings(personId: String!): [PersonGQL!]!
+  spouses(personId: String!): [PersonGQL!]!
+  treeAncestors(personId: String!): [PersonGQL!]!
+  treeChildren(parentId: String!): [PersonGQL!]!
+  treeRoot: [PersonGQL!]!
+  treeSiblings(personId: String!): [PersonGQL!]!
+  treeStats: TreeStatsGQL!
+}
+
+type TreeStatsGQL {
+  maxDepth: Int!
+  rootPerson: PersonGQL
+  totalGenerations: Int!
+  totalPeople: Int!
+}
+
+input UpdatePersonInputGQL {
+  bio: String
+  birthDate: String
+  birthPlace: String
+  deathDate: String
+  deathPlace: String
+  firstName: String
+  gender: Gender
+  lastName: String
+  maidenName: String
+  middleName: String
+  notes: String
+}

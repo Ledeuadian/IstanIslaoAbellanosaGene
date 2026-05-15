@@ -1,0 +1,102 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  line-height: 1.5;
+  font-weight: 400;
+  color-scheme: light;
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html, body, #root {
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+}
+
+/* Mobile responsive styles */
+@media (max-width: 768px) {
+  /* Stack header elements vertically on mobile */
+  .flex.items-center.justify-between {
+    flex-direction: column;
+    gap: 0.75rem;
+    align-items: stretch;
+  }
+  
+  .flex.items-center.gap-4 {
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+  
+  /* Make search bar full width on mobile */
+  .search-bar-container input {
+    width: 100%;
+  }
+  
+  /* Adjust zoom controls for touch */
+  .zoom-controls button {
+    padding: 0.75rem;
+    min-width: 44px;
+    min-height: 44px;
+  }
+  
+  /* Reduce padding on mobile */
+  .p-4 {
+    padding: 0.75rem;
+  }
+  
+  /* Sidebar full width on mobile */
+  .absolute.top-20.right-4.w-80 {
+    width: calc(100% - 1rem);
+    right: 0.5rem;
+    max-height: 40vh;
+  }
+  
+  /* Bottom controls positioning */
+  .absolute.bottom-8.left-8 {
+    bottom: 1rem;
+    left: 1rem;
+  }
+}
+
+/* Touch-friendly buttons on mobile */
+@media (pointer: coarse) {
+  button, 
+  [role="button"],
+  .clickable {
+    min-height: 44px;
+    min-width: 44px;
+  }
+  
+  input, 
+  select, 
+  textarea {
+    min-height: 44px;
+    font-size: 16px; /* Prevents iOS zoom on focus */
+  }
+}
+
+/* Prevent pull-to-refresh on the app */
+body {
+  overscroll-behavior: none;
+  touch-action: pan-x pan-y;
+}
+
+.family-tree-canvas {
+  cursor: grab;
+}
+
+.family-tree-canvas:active {
+  cursor: grabbing;
+}
